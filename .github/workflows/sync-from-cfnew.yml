@@ -11,16 +11,18 @@ jobs:
     
     steps:
       - name: 检出仓库
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
       
       - name: 获取 cfnew 最新发布
         id: get_latest
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           # 获取最新 release 信息
           echo "正在获取最新发布信息..."
-          LATEST_RELEASE=$(curl -s https://api.github.com/repos/byJoey/cfnew/releases/latest)
+          LATEST_RELEASE=$(curl -s -H "Authorization: Bearer $GH_TOKEN" https://api.github.com/repos/byJoey/cfnew/releases/latest)
           
           # 使用 sed 提取版本号（兼容性更好）
           VERSION=$(echo "$LATEST_RELEASE" | sed -n 's/.*"tag_name": "\([^"]*\)".*/\1/p')
@@ -31,7 +33,7 @@ jobs:
           # 获取所有 assets 文件
           ASSETS_URL=$(echo "$LATEST_RELEASE" | sed -n 's/.*"assets_url": "\([^"]*\)".*/\1/p')
           echo "正在获取文件列表..."
-          ASSETS=$(curl -s "$ASSETS_URL")
+          ASSETS=$(curl -s -H "Authorization: Bearer $GH_TOKEN" "$ASSETS_URL")
           
           # 查找 Pages.zip 文件
           # 使用更可靠的方法查找包含 Pages.zip 的下载 URL
@@ -171,4 +173,3 @@ jobs:
           else
             echo "- 状态: ⏭️ 版本相同，无需更新" >> $GITHUB_STEP_SUMMARY
           fi
-
